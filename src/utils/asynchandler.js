@@ -1,7 +1,7 @@
 //we will just make a method and export it
 const asyncHandler=(requestHandler)=>{
     //now we hadle the requesthandler as a promise
-    (req,res,next)=>{
+    return (req,res,next)=>{
         Promise.resolve(requestHandler(req,res,next)).catch((err)=>next(err));
     }
    
