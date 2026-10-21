@@ -31,15 +31,7 @@ const userSchema=new mongoose.Schema({
         
 
     },
-    username:{
-        type:String,
-        required:true,
-        unique:true,
-        lowercase:true,
-        trim:true,
-        index:true,
-
-    },
+    
     avatar:{
         type:String,//we will get from cloudnary
         required:true,
