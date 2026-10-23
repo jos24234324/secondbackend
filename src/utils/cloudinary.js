@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-
+import fs from "fs";
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -11,8 +11,11 @@ const uploadOnCloudinary = async (localFilePath) => {
     throw new Error("A local file path is required for Cloudinary upload");
   }
 
-  return cloudinary.uploader.upload(localFilePath, {
+  const response = await cloudinary.uploader.upload(localFilePath, {
     resource_type: "auto",
   });
+  fs.unlinkSync(localFilePath);
+  return response;
 };
+
 export default uploadOnCloudinary;

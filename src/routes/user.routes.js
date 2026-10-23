@@ -4,6 +4,8 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router=Router();
 router.route("/register").post(
+    //multer will take the files from here and put them in the 
+    //multre will upload the elemnts while taking from the request with same name;
     upload.fields([{
         name:"avatar",
         maxCount:1
