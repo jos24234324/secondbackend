@@ -19,5 +19,10 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/logout").post(auther,logoutUser);
+router.route("/reset-password").post(auther,resetPassword);
 router.route("/refresh-token").post(refreshAccessToken);
+router.route("/current-user").get(auther,getCurrentUser);
+router.route("/update-user-details").put(auther,updateUserDetails);
+router.route("/update-user-avatar").put(auther,upload.single("avatar"),updateUserAvatar);
+router.route("/update-user-cover-image").put(auther,upload.single("coverImage"),updateUserCoverImage);
 export default router;
