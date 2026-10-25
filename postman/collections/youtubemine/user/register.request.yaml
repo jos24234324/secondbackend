@@ -1,28 +1,28 @@
 $kind: http-request
 description: ""
-url: http://localhost:4000/api/v1/users/register
+url: "{{server}}users/register"
 method: POST
 body:
   type: formdata
   content:
     - type: text
       key: fullname
-      value: aaron fernandes
+      value: niggesh
       description: ""
       disabled: false
     - type: text
       key: email
-      value: nig
+      value: digger
       description: ""
       disabled: false
     - type: text
       key: password
-      value: valor
+      value: Duke
       description: ""
       disabled: false
     - type: text
       key: username
-      value: val
+      value: niggaa
       description: ""
       disabled: false
     - type: file

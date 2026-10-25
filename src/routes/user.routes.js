@@ -1,7 +1,8 @@
 import { Router } from "express";   
 import { registerUser,loginUser,logoutUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-
+import { auther } from "../middlewares/auth.middleware.js";
+import { refreshAccessToken } from "../controllers/user.controller.js";
 const router=Router();
 router.route("/register").post(
     //multer will take the files from here and put them in the 
@@ -18,4 +19,5 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/logout").post(auther,logoutUser);
+router.route("/refresh-token").post(refreshAccessToken);
 export default router;

@@ -1,12 +1,12 @@
-import { asyncHandler } from "../utils/asynchandler";
-import {User} from "../models/user.model"
-import ApiError from "../utils/apierror";
+import { asyncHandler } from "../utils/asynchandler.js";
+import {User} from "../models/user.model.js"
+import ApiError from "../utils/apierror.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 const auther=asyncHandler(async (req,res,next)=>{
     //we have to give the 
     //we may resieve it through header auth or fro cookies
-    const accessToken=req.cookies?.accessToken||req.header(Authorization)?.replace("bearer ","");
+    const accessToken=req.cookies?.accessToken||req.header("Authorization")?.replace("Bearer ","");
     if(!accessToken){
         throw new ApiError(400,"accesstoken not receieved")
     };
@@ -33,3 +33,4 @@ const auther=asyncHandler(async (req,res,next)=>{
     
 
 })
+export {auther}

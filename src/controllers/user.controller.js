@@ -78,20 +78,22 @@ const loginUser = asyncHandler(async (req, res) => {
   } else {
     throw new ApiError(400, `password doesnt match`);
   };
+
   //giving him the refresh and access tokens;
   const accestoken=await user.generateAccessToken();
   const refreshtoken=await user.generateRefreshToken();
-  user.refreshtoken=refreshtoken;
+  user.refreshToken=refreshtoken;
   await user.save({ validateBeforeSave: false });
-  options = {
+  const options = {
     httpOnly: true,
     secure:true,
   };
+
   return res
       .status(201)
       .cookie("accessToken", accestoken, options)
       .cookie("refreshToken", refreshtoken, options )
-      .json(new ApiResponse(200,user,"User logged in succesfully"));
+      .json(new ApiResponse(200,user.select("-password -refreshToken"),"User logged in succesfully"));
 });
 const logoutUser = asyncHandler(async (req, res) => {
   //now we need to know which user is logged in and logout him;
@@ -104,5 +106,36 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken")
     .json(new ApiResponse(200, null, "User logged out succesfully"));
 });
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
 
-export { registerUser, loginUser, logoutUser };
+  if (!refreshToken) {
+    throw new ApiError(400, "Refresh token not received");
+  };
+  //verify the jwt
+  const decoded = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  if (!decoded) {
+    throw new ApiError(400, "Refresh token expired or compromised");
+  };
+  const id = decoded._id;
+  const user = await User.findById(id);
+  if (!user) {
+    throw new ApiError(400, "User with this id is not found");
+  }
+  if (user.refreshToken !== refreshToken) {
+    throw new ApiError(400, "Refresh token does not match");
+  }
+  //now we need to generate a new access token and refresh token for this user;
+
+  const accessToken = await user.generateAccessToken();
+  const newrefreshToken = await user.generateRefreshToken();
+  user.refreshToken=newrefreshToken;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, { httpOnly: true, secure: true })
+    .cookie("refreshToken", newrefreshToken, { httpOnly: true, secure: true })
+    .json(new ApiResponse(200, null, "Access token refreshed successfully"));
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
