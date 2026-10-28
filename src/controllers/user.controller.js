@@ -154,8 +154,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!id) {
     throw new ApiError(400, "invalid access token");
   }
-  
-  
+
   const user = await User.findById(id);
   if (await user.verifyPassword(oldPassword)) {
     user.password = newPassword;
@@ -174,20 +173,32 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   }
   return res
     .status(200)
-    .json(new ApiResponse(200, user.select("-password -refreshToken"), "User fetched successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        user.select("-password -refreshToken"),
+        "User fetched successfully"
+      )
+    );
 });
 const updateUserDetails = asyncHandler(async (req, res) => {
   const user = req.user;
   if (!user) {
     throw new ApiError(400, "User not found");
   }
-  const { fullname, email}  = req.body;
+  const { fullname, email } = req.body;
   if (fullname) user.fullname = fullname;
   if (email) user.email = email;
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .json(new ApiResponse(200, user.select("-password -refreshToken"), "User details updated successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        user.select("-password -refreshToken"),
+        "User details updated successfully"
+      )
+    );
 });
 const updateUserAvatar = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -203,7 +214,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .json(new ApiResponse(200, user.select("-password -refreshToken"), "User avatar updated successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        user.select("-password -refreshToken"),
+        "User avatar updated successfully"
+      )
+    );
 });
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -219,8 +236,114 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .json(new ApiResponse(200, user.select("-password -refreshToken"), "User cover image updated successfully"));
-}); 
+    .json(
+      new ApiResponse(
+        200,
+        user.select("-password -refreshToken"),
+        "User cover image updated successfully"
+      )
+    );
+});
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is required");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: { username: username?.toLowerCase() },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscriberedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscriberCount: { $size: "$subscribers" },
+        subscriberedToCount: { $size: "$subscriberedTo" },
+
+        isSubscribed: { $in: [req.user?._id, "$subscribers.subscriber"] },
+      },
+    },
+  ]);
+  if (channel?.length === 0) {
+    throw new ApiError(404, "Channel not found");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "Channel profile fetched successfully")
+    );
+});
+const getUserWatchHistory = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    throw new ApiError(400, "User not found");
+  }
+  const watchHistory = await User.aggregate([
+    {
+      $match: { _id: new mongoose.Types.ObjectId(user._id) },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    password: 0,
+                    refreshToken: 0,
+                  },
+                },
+                
+
+                
+              ],
+            },
+          },{
+            $addFields: {
+              owner: { $arrayElemAt: ["$owner", 0] },
+            },
+          },
+          {
+          }
+        ],
+      },
+    },
+  ]);
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        watchHistory[0]?.watchHistory || [],
+        "User watch history fetched successfully"
+      )
+    );
+});
 export {
   registerUser,
   loginUser,
@@ -231,4 +354,5 @@ export {
   updateUserDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserWatchHistory,
 };
