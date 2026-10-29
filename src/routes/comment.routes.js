@@ -1,5 +1,17 @@
-import { Router } from "express"; 
-impot { getAllComments,createComment,updateComment,deleteComment } from "../controllers/comment.controller.js"; 
+import { Router } from "express";
+import {
+  addComment,
+  deleteComment,
+  getVideoComments,
+  updateComment,
+} from "../controllers/comment.controller.js";
 import { auther } from "../middlewares/auth.middleware.js";
-const router=Router();
-router.use(auther);
+
+const router = Router();
+
+router.use(auther); // Apply auther  middleware to all routes in this file
+
+router.route("/:videoId").get(getVideoComments).post(addComment);
+router.route("/c/:commentId").delete(deleteComment).patch(updateComment);
+
+export default router;

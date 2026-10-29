@@ -13,46 +13,47 @@ const getVideoComments = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
   //i have to use aggregate to get the comments for a video and also get the owner of the comment
-  const allcomments = await Comment.aggregate([
-    {
-      $match: {
-        video: new mongoose.Types.ObjectId(videoId),
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "owner",
-              pipeline: [
-                {
-                  $project: {
-                    password: 0,
-                    refreshToken: 0,
-                  },
+  const allcomments = await Comment.aggregatePaginate(
+    Comment.aggregate(
+      [
+        {
+          $match: { video: new mongoose.Types.ObjectId(videoId) },
+        },
+        {
+          //i have got all the comments containng the required video id;
+          //now i will pull up the information of the aurthor
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+            pipeline: [
+              {
+                $project: {
+                  password: 0,
+                  refreshToken: 0,
                 },
-              ],
-            },
+              },
+            ],
           },
-          {
-            $addFields: {
-              owner: { $arrayElemAt: ["$owner", 0] },
-            },
+        },
+        {
+          addFields: {
+            owner: { $arrayElemAt: ["$owner", 0] },
           },
-        ],
-      },
-    },
-  ]);
+        },
+      ],
+      { page, limit }
+    )
+  );
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        mongoose.paginate(allcomments, { page, limit }),
-        "Comments fetched successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+
+      "Comments fetched successfully"
+    )
+  );
 });
 
 const addComment = asyncHandler(async (req, res) => {
